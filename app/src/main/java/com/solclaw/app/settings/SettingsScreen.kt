@@ -113,7 +113,7 @@ fun SettingsScreen() {
                 }
             }
 
-            // Foreground App Monitor (visible when service is running)
+            // Foreground App Monitor + Actions (visible when service is running)
             if (isServiceRunning) {
                 Text(
                     text = "Foreground App Monitor",
@@ -133,6 +133,41 @@ fun SettingsScreen() {
                     ) {
                         InfoRow("Package", foregroundApp.packageName.ifEmpty { "—" })
                         InfoRow("Class", foregroundApp.className.ifEmpty { "—" })
+                    }
+                }
+
+                // Test Actions
+                Text(
+                    text = "Action Tests",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Launches Chrome, parses the screen, and taps the address bar. Check Logcat (tag: SolClawAction) for output.",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                        Button(
+                            onClick = {
+                                SolClawAccessibilityService.instance?.testLaunchChromeAndTapAddressBar()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SolClawGreen),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Test: Launch Chrome + Tap Address Bar", color = MaterialTheme.colorScheme.background)
+                        }
                     }
                 }
             }
