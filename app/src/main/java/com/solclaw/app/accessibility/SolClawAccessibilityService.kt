@@ -1,7 +1,6 @@
 package com.solclaw.app.accessibility
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +13,15 @@ data class ForegroundAppInfo(
     val timestamp: Long = 0L
 )
 
+data class ScreenSnapshot(
+    val packageName: String = "",
+    val elements: List<ScreenElement> = emptyList(),
+    val timestamp: Long = 0L
+)
+
 class SolClawAccessibilityService : AccessibilityService() {
+
+    private val screenParser = ScreenParser()
 
     companion object {
         private const val TAG = "SolClawA11y"
@@ -24,6 +31,9 @@ class SolClawAccessibilityService : AccessibilityService() {
 
         private val _foregroundApp = MutableStateFlow(ForegroundAppInfo())
         val foregroundApp: StateFlow<ForegroundAppInfo> = _foregroundApp.asStateFlow()
+
+        private val _screenSnapshot = MutableStateFlow(ScreenSnapshot())
+        val screenSnapshot: StateFlow<ScreenSnapshot> = _screenSnapshot.asStateFlow()
     }
 
     override fun onServiceConnected() {
@@ -47,12 +57,43 @@ class SolClawAccessibilityService : AccessibilityService() {
                     className = cls,
                     timestamp = System.currentTimeMillis()
                 )
+
+                // Parse the full screen tree
+                parseCurrentScreen(pkg)
             }
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                // Only re-parse on significant content changes to avoid flooding
                 val pkg = event.packageName?.toString() ?: "unknown"
-                Log.v(TAG, "Content changed → pkg=$pkg")
+                val source = event.source
+                if (source != null) {
+                    // Only log, don't full-parse on every content change
+                    Log.v(TAG, "Content changed → pkg=$pkg")
+                    source.recycle()
+                }
             }
+        }
+    }
+
+    private fun parseCurrentScreen(packageName: String) {
+        try {
+            val rootNode = rootInActiveWindow ?: run {
+                Log.w(TAG, "No root node available for parsing")
+                return
+            }
+
+            val elements = screenParser.parse(rootNode)
+
+            _screenSnapshot.value = ScreenSnapshot(
+                packageName = packageName,
+                elements = elements,
+                timestamp = System.currentTimeMillis()
+            )
+
+            Log.i(TAG, "Screen snapshot: ${elements.size} elements from $packageName")
+            rootNode.recycle()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing screen: ${e.message}", e)
         }
     }
 
