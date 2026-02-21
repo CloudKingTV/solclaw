@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SolClaw</string>
+    <string name="accessibility_service_description">SolClaw uses accessibility to read and interact with apps on your behalf. Your AI agent can navigate apps, tap buttons, fill forms, and read screen content to complete tasks you request.</string>
 </resources>
