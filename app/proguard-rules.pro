@@ -1,0 +1,1 @@
+# SolClaw ProGuard rules
